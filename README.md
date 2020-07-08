@@ -1,4 +1,5 @@
-# GeneticWeightUploading - Joe McCalmon
+# GeneticWeightUploading
+Joe McCalmon
 These are files to upload weights into a model, retrieved from a genetic algorithm.
 
 The main file, and the one which should be run, is LoadWeights.py. test_directory should be the filepath to the folder of test images. The weights variable should hold the list of weights gotten from the genetic algorithm, or from an h5 file.
