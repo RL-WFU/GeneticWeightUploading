@@ -12,4 +12,6 @@ To change the model shape, change the layers inside build_baseline_with_weights.
 
 If using images other than MNIST, you will need to change the helper functions load_image and load_directory in Prediction.py. Each 28 must be changed to the dimension of the new image.
 
+If you run into unexpected shape errors. There is most likely an issue with the shape of the weights. Check to make sure the list of weights is in the format described in either np_weights or build_baseline_with_weights. If the problem is still occuring, the weights probably don't fit the model's layers correctly. Run model.summary() for a detailed explanation of the shape of the outputs.
+
 More detailed instructions regarding parameters and returns are commented in LoadWeights.py
