@@ -39,14 +39,14 @@ def np_weights(saved_weights, h5):
     Second axis corresponds to either weights or biases. Ex: layer_info[2][0] is the weights of the third valid layer
     """
     if h5:
-        array_weights = array_model_weights(saved_weights)
+        array_weights = array_model_weights(saved_weights) #Turn weights into a list if not already
 
     layer_info = []
-    for i in range(len(array_weights)):
-        layer = np.asarray(array_weights[i], dtype=object)
-        if len(layer) != 0:
-            layer_weights = np.asarray(layer[0])
-            layer_biases = np.asarray(layer[1])
+    for i in range(len(array_weights)): #Iterate through the layers
+        layer = np.asarray(array_weights[i], dtype=object) #Weights and biases of ith layer
+        if len(layer) != 0: #If the layer is not empty (if it is not pooling or flatten)
+            layer_weights = np.asarray(layer[0]) #weights
+            layer_biases = np.asarray(layer[1]) #biases
             layer_info.append((layer_weights, layer_biases))
         else:
             continue
@@ -109,18 +109,64 @@ def build_baseline_with_weights(layer_info):
 
     return model
 
+
+def black_box_sub_model(layer_info):
+    model = Sequential()
+
+    # CONSTRUCT LAYERS
+
+    """
+    This substitute model for JSMA black box attacks does not have a convolutional layer, only two hidden layers
+    of 200 output units, and an output layer of 10 units
+    """
+    # Flatten filter maps to pass to classifier
+    model.add(Flatten())
+
+    model.add(Dense(200, activation='relu', kernel_initializer=initialize_weights(layer_info[0][0]),
+                    bias_initializer=initialize_weights(layer_info[0][1])))
+    model.add(Dense(200, activation='relu', kernel_initializer=initialize_weights(layer_info[1][0]),
+                    bias_initializer=initialize_weights(layer_info[1][1])))
+
+    """
+    NOTE: This output layer does not output probabilities, it outputs LOGITS. Call tf.nn.softmax on the output,
+    to turn it into probabilities
+    """
+    model.add(Dense(10, activation='linear', kernel_initializer=initialize_weights(layer_info[2][0]),
+                    bias_initializer=initialize_weights(layer_info[2][1])))
+
+    return model
+
+
+
+
+def prepare_model(fpath, sub=False):
+    """
+    For the substitute model, I have the weights already in array format, in a .npy file (produced by numpy.save)
+    """
+    if sub:
+        weights = np.load('weights_arr.npy', allow_pickle=True)
+        weights = np.reshape(weights, [3, 2])
+        model = black_box_sub_model(weights)
+
+    else:
+        layer_information = np_weights(fpath, h5=True)
+        model = build_baseline_with_weights(layer_information)
+
+    return model
+
+
+
+
+
+
 if __name__ == "__main__":
     #Directory where test images are
     test_directory = "PredictionImages/Raiford_Handwritten/"
 
-    #Weights file. If not an h5 file, this should be the list of weights/biases
-    weights = "final_model.h5"
+    path_to_weights = "sub_weights_array.txt"
 
-    #Process the weights
-    layer_information = np_weights(weights, h5=True)
+    model = prepare_model(path_to_weights, sub=True)
 
-    #Return the model object
-    model = build_baseline_with_weights(layer_information)
 
     #Preprocess the image. Replace "0a.png" with test image
     img = load_image(test_directory + "0a.png")
